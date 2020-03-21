@@ -2,20 +2,14 @@ function onEdit(e){
   // Not really a normal onEdit because UrlFetch needs extra permissions, 
   // there's a custom trigger (edit -> current project's triggers)
   // https://developers.google.com/apps-script/guides/triggers/installable 
-  if (e){
   var range = e.range;
   var row = range.getRow();
   var column = range.getColumn();
   var value = range.getValue();
-  }
-  else{
-  var row =99;
-  var column = 1;
-  var value = "star wars";
-  }
+  
   if (column==1){
     var movie_name = value;
-    var omdb_api_key = "";// wont work without it
+    var omdb_api_key = "cc4de88";// wont work without it
     if (row>1){
       var sheet = SpreadsheetApp.getActiveSheet();
       var data = sheet.getDataRange().getValues();
