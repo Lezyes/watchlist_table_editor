@@ -1,83 +1,59 @@
-// needs cloudignite
-function formatMySpreadsheet() {
-  // Set the font style of the cells in the range of B2:C2 to be italic.
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheets()[0];
-  
-  for (var i = 1; i <= sheet.getDataRange().getValues().length; i++) {
-    var cell = sheet.getRange(i,2);
-    value = cell.getValue();
-    Logger.log(value)
-    if (value=='Yes') {
-      cell.setBackgroundRGB(36,255,73);
-       Logger.log("yes");
-    }
-    if (value=='No'){
-      cell.setBackgroundRGB(255,47,47);
-      Logger.log("no");
-    }
-  }
-
-}
-
-
-function formulaToValue() {
-  //formula to value
-  var sheet = SpreadsheetApp.getActiveSheet();
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i <= data.length; i++) {
-    for (var j = 1; j <= data[i-1].length; j++) {
-    var cell = sheet.getRange(i,j);
-    value = data[i-1][j-1]
-    //cell.setValue(value);
-      if (value!="#ERROR!"  ){
-        Logger.log(value);
-        cell.setValue(value);
-      }
-    }
-  }
-}
-
-
 function onEdit(e){
-  // Set a comment on the edited cell to indicate when it was changed.
-  //data(row, column)
+  // Not really a normal onEdit because UrlFetch needs extra permissions, 
+  // there's a custom trigger (edit -> current project's triggers)
+  // https://developers.google.com/apps-script/guides/triggers/installable 
+  if (e){
   var range = e.range;
   var row = range.getRow();
   var column = range.getColumn();
-  var value = range.getValue()
-  if (column==1){
-    
-    var sheet = SpreadsheetApp.getActiveSheet();
-    var data = sheet.getDataRange().getValues();
-    var length = data[1].length;
-    
-    //range.setNote('Last modified: ' + new Date());
-    for (var j = 5; j <= length; j++) {
-      sheet.getRange(row, j).setValue('=Ignite("omdbapi.com","lookup","'+data[0][j-1]+'","'+value+'")');
-      var newValue = sheet.getRange(row, j).getValue();     
-      sheet.getRange(row, j).setValue(newValue);
-    }
-    //https://thepiratebay.org/search/
-    var pirateValue = value.replace(/ /g,"%20").replace(/'/g,'').replace(/,/g,'').replace(/:/g,'');
-    if (pirateValue!=''){
-      sheet.getRange(row, 4).setValue("https://thepiratebay.org/search/"+ pirateValue +"/");
-    }
-    else{
-      sheet.getRange(row, 4).setValue('')
-    }
-    
+  var value = range.getValue();
   }
-  if (column==2){    
-    if (value=='Yes') {
+  else{
+  var row =99;
+  var column = 1;
+  var value = "star wars";
+  }
+  if (column==1){
+    var movie_name = value;
+    var omdb_api_key = "";// wont work without it
+    if (row>1){
+      var sheet = SpreadsheetApp.getActiveSheet();
+      var data = sheet.getDataRange().getValues();
+      var length = data[1].length;
+      var movie_data = JSON.parse(UrlFetchApp.fetch("https://www.omdbapi.com/?t="+movie_name+"&apikey="+omdb_api_key)); //works with spaces, OMG :D 
+      
+      
+      //https://rarbgtor.org/torrents.php?search
+      var pirateValue = movie_name.replace(/ /g,"+").replace(/'/g,'').replace(/,/g,'').replace(/:/g,'');
+      if (pirateValue!=''){
+        sheet.getRange(row, 4).setValue("https://rarbgtor.org/torrents.php?search="+ pirateValue); // + "/"
+      }
+      else{
+        sheet.getRange(row, 4).setValue('');
+      }
+      for (var j = 5; j <= length; j++) {
+        var field = data[0][j-1];
+        sheet.getRange(row, j).setValue(movie_data[field]);
+      }
+      //https://www.imdb.com/title/ + =Ignite("omdbapi.com","lookup","imdbID",movie name) == imdb link
+      //=hyperlink("link","text") the \" are important 
+      var imdbid = movie_data["imdbID"];
+      sheet.getRange(row, column).setValue('=hyperlink("https://www.imdb.com/title/'+imdbid+'","'+movie_name+'")');
+      
+    }
+  }
+  if (column==2){   
+    if (value.toString().toLowerCase()=='yes') {
       range.setBackgroundRGB(36,255,73);
     }
-    if (value=='No'){
+    if (value.toString().toLowerCase()=='no'){
       range.setBackgroundRGB(255,47,47);
     }
-    if (value=="Half"){
+    if (value.toString().toLowerCase()=="half"){
       range.setBackgroundRGB(91,179,255);
     }
+    if (value == ""){
+      range.setBackground(null);
+    }
   }
-  
 }
